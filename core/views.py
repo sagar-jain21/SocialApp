@@ -16,22 +16,22 @@ from core.serializers import (
     FollowingsSerializer,
     LikeSerializer,
     PostSerializer,
-    PostCreateSerializer
+    PostGetSerializer
 )
 
 from .models import Comment, Follow, Like, Post
-from .permissions import IsAuthenticatedOwner
+from .permissions import IsOwnerOrReadOnly
 
 
 class PostCreateAPIView(CreateAPIView):
-    serializer_class = PostCreateSerializer
+    serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         if "user" not in request.data:
             request.data["user"] = request.user.id
 
-        serializer = PostCreateSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(
@@ -43,14 +43,17 @@ class PostCreateAPIView(CreateAPIView):
 
 class PostRetrieveAPIView(RetrieveAPIView):
     queryset = Post.objects.all()
-    serializer_class = PostSerializer
+    serializer_class = PostGetSerializer
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk, *args, **kwargs):
-        post = Post.objects.filter(pk=pk).first()
-        if post is not None:
-            serilizer = PostSerializer(post)
-            return Response(serilizer.data, status=status.HTTP_200_OK)
+        # post = Post.objects.filter(pk=pk).first()
+        post = self.get_object()
+
+        if post:
+            # serializer = PostGetSerializer(post)
+            serializer = self.get_serializer(post)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(
             {"errors": {"msg": "Invalid Post Id!"}},
             status=status.HTTP_400_BAD_REQUEST,
@@ -59,22 +62,26 @@ class PostRetrieveAPIView(RetrieveAPIView):
 
 class PostListAPIView(ListAPIView):
     queryset = Post.objects.all()
-    serializer_class = PostSerializer
+    serializer_class = PostGetSerializer
     # permission_classes = [IsAuthenticated]
 
 
 class PostUpdateAPIView(UpdateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticatedOwner]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def put(self, request, pk, *args, **kwargs):
         if "user" not in request.data:
             request.data["user"] = request.user.id
 
-        post = Post.objects.filter(pk=pk).first()
-        if post is not None:
-            serializer = PostSerializer(post, data=request.data)
+        # post = Post.objects.filter(pk=pk).first()
+        # post = get_object_or_404(Post, pk=pk)
+        post = self.get_object()
+
+        if post:
+            # serializer = PostSerializer(post, data=request.data)
+            serializer = self.get_serializer(post, data=request.data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(
@@ -93,9 +100,14 @@ class PostUpdateAPIView(UpdateAPIView):
         if "user" not in request.data:
             request.data["user"] = request.user.id
 
-        post = Post.objects.filter(pk=pk).first()
-        if post is not None:
-            serializer = PostSerializer(post, data=request.data, partial=True)
+        # post = Post.objects.filter(pk=pk).first()
+        post = self.get_object()
+
+        if post:
+            # serializer = PostSerializer(post, data=request.data,
+            #                             partial=True)
+            serializer = self.get_serializer(post, data=request.data,
+                                             partial=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(
@@ -114,22 +126,13 @@ class PostUpdateAPIView(UpdateAPIView):
 class PostDeleteAPIView(DestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def delete(self, request, pk, *args, **kwargs):
-        post = Post.objects.filter(pk=pk).first()
-        if int(request.user.id) != int(post.user.id):
-            return Response(
-                {
-                    "errors": {
-                        "msg":
-                        "You do not have permission to perform this action."
-                    }
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # post = Post.objects.filter(pk=pk).first()
+        post = self.get_object()
 
-        if post is not None:
+        if post:
             post.delete()
             return Response(
                 {"msg": "Post Deleted Successfully!"},
@@ -174,7 +177,7 @@ class PostCommentsListAPIView(ListAPIView):
 
 class LikeCreateAPIView(CreateAPIView):
     serializer_class = LikeSerializer
-    permission_classes = [IsAuthenticatedOwner]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         if "user" not in request.data:

@@ -4,14 +4,14 @@ from authentication.serializers import UserDataSerializer
 from core.models import Comment, Follow, Like, Post
 
 
-class PostCreateSerializer(serializers.ModelSerializer):
+class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
         fields = "__all__"
 
 
-class PostSerializer(serializers.ModelSerializer):
+class PostGetSerializer(serializers.ModelSerializer):
     user = UserDataSerializer()
 
     class Meta:
