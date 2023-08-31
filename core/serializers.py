@@ -13,10 +13,28 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PostGetSerializer(serializers.ModelSerializer):
     user = UserDataSerializer()
+    count_comments = serializers.SerializerMethodField()
+    count_likes = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = "__all__"
+
+    def get_count_comments(self, obj):
+        return Comment.objects.filter(post__user=obj.user).count()
+
+    def get_count_likes(self, obj):
+        return Like.objects.filter(post__user=obj.user).count()
+
+    def get_comments(self, obj):
+        comments = Comment.objects.filter(post__user=obj.user)
+        return CommentSerializer(comments, many=True).data
+
+    def get_likes(self, obj):
+        comments = Like.objects.filter(post__user=obj.user)
+        return LikeSerializer(comments, many=True).data
 
 
 class LikeSerializer(serializers.ModelSerializer):
@@ -26,6 +44,7 @@ class LikeSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Comment
         fields = "__all__"

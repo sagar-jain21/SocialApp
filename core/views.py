@@ -44,7 +44,7 @@ class PostCreateAPIView(CreateAPIView):
 class PostRetrieveAPIView(RetrieveAPIView):
     queryset = Post.objects.all()
     serializer_class = PostGetSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get(self, request, pk, *args, **kwargs):
         # post = Post.objects.filter(pk=pk).first()
@@ -156,8 +156,8 @@ class PostCommentsListAPIView(ListAPIView):
         all_comments = Comment.objects.filter(post=pk)
         if all_comments is not None:
             comment_serializer = CommentSerializer(all_comments, many=True)
-            comments = len(comment_serializer.data)
-            post_data["Count Of Comments"] = comments
+            comments = all_comments.count()
+            post_data["Count Of Comments"] = all_comments.count()
             post_data["Comments"] = comment_serializer.data
 
         all_likes = Like.objects.filter(post=pk)
@@ -177,7 +177,7 @@ class PostCommentsListAPIView(ListAPIView):
 
 class LikeCreateAPIView(CreateAPIView):
     serializer_class = LikeSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         if "user" not in request.data:
@@ -192,7 +192,7 @@ class LikeCreateAPIView(CreateAPIView):
                 {"msg": "Already Liked!"}, status=status.HTTP_200_OK
             )
 
-        serializer = LikeSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(
@@ -209,8 +209,8 @@ class LikeRetrieveAPIView(RetrieveAPIView):
     def get(self, request, pk, *args, **kwargs):
         like = Like.objects.filter(pk=pk).first()
         if like is not None:
-            serilizer = LikeSerializer(like)
-            return Response(serilizer.data, status=status.HTTP_200_OK)
+            serializer = self.get_serializer(like)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(
             {"errors": {"msg": "Invalid Like Id!"}},
             status=status.HTTP_400_BAD_REQUEST,
@@ -231,10 +231,10 @@ class CommentListAPIView(ListAPIView):
     def get(self, request, pk, *args, **kwargs):
         comments = Comment.objects.filter(user=pk)
         if comments:
-            serializer = CommentSerializer(comments, many=True)
+            serializer = self.get_serializer(comments, many=True)
             return Response(
                 {
-                    "Count Of Comments": len(serializer.data),
+                    "Count Of Comments": comments.count(),
                     "Comments": serializer.data,
                 },
                 status=status.HTTP_200_OK,
@@ -253,7 +253,7 @@ class FollowersListAPIView(ListAPIView):
     def get(self, request, pk, *args, **kwargs):
         followers = Follow.objects.filter(user_following=pk)
         if followers:
-            serializer = FollowersSerializer(followers, many=True)
+            serializer = self.get_serializer(followers, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(
             {"msg": "No Followers for this User!"},
@@ -270,7 +270,7 @@ class FollowingListAPIView(ListAPIView):
     def get(self, request, pk, *args, **kwargs):
         following = Follow.objects.filter(user=pk)
         if following:
-            serializer = FollowingsSerializer(following, many=True)
+            serializer = self.get_serializer(following, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(
             {"msg": "No Followings for this User!"},

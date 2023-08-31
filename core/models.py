@@ -7,7 +7,8 @@ from authentication.models import User
 
 
 class Post(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                            editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=30)
     content = models.CharField(max_length=500)
@@ -26,7 +27,8 @@ class BaseLikeComment(models.Model):
 
 
 class Like(BaseLikeComment):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                            editable=False)
 
     class Meta:
         unique_together = (
@@ -39,7 +41,8 @@ class Like(BaseLikeComment):
 
 
 class Comment(BaseLikeComment):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                            editable=False)
     comment = models.CharField(max_length=100)
 
     def __str__(self):
